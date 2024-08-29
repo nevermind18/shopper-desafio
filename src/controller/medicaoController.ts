@@ -3,13 +3,13 @@ import { IMedicao, medicao } from '../model/medicao'
 import detectText from '../integration/detectText'
 
 class MedicaoController {
-    static async cadastarMedicao(req: Request, res: Response): Promise<void> {      
+    static async cadastarMedicao(req: Request, res: Response, next: NextFunction): Promise<void> {      
         const { customer_code, measure_type, measure_datatime } = req.body;  
         const pipeline = [
             {
                 $match: {
                     customer_code: customer_code,
-                    measure_type: measure_type,
+                    measure_type: measure_type.toLowerCase(),
                     measure_datatime: {
                         $gte: new Date(new Date(measure_datatime).getFullYear(), new Date(measure_datatime).getMonth(), 1),
                         $lte: new Date(new Date(measure_datatime).getFullYear(), new Date(measure_datatime).getMonth() + 1, 0, 23, 59, 59, 999)
@@ -19,11 +19,12 @@ class MedicaoController {
         ];
         try {
             const medicaoEncontrada = await medicao.aggregate(pipeline).exec();
-            console.log(medicaoEncontrada.length)
+
             if(medicaoEncontrada.length === 0){
                 detectText(req.body.image).then(async (measure_value) => {
                     const medicaoCadastrar:IMedicao = await medicao.create(
                         {...req.body,
+                            measure_type: req.body.measure_type.toLowerCase(),
                             image_url: req.body.image,
                             measure_value,
                             has_confirmed: false
@@ -44,11 +45,7 @@ class MedicaoController {
                 })
             }
         } catch (error) {
-            console.error('Erro ao buscar a medição:', error);
-            res.status(500).json({
-                error_code: "SEARCH_ERROR",
-                error_description: "Erro ao buscar a medição"
-            });
+            next(error)
         }
     }
     
