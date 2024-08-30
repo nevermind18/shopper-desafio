@@ -1,8 +1,10 @@
 
 import mongoose, { Model, Schema } from "mongoose"
+import { v4 as uuidv4 } from 'uuid'
 
 interface IMedicao extends Document{
-    measure_uuid: mongoose.Types.ObjectId;
+    id: mongoose.Schema.Types.ObjectId
+    measure_uuid: String;
     image_url: String
     measure_value: String
     measure_type: String
@@ -12,11 +14,12 @@ interface IMedicao extends Document{
 }
 
 const medicaoSchema: Schema<IMedicao> = new mongoose.Schema({
+    id: { type: mongoose.Schema.Types.ObjectId },
     measure_uuid: { 
-        type: mongoose.Schema.Types.ObjectId, 
+        type: String, 
         required: true, 
         unique: true,
-        default: () => new mongoose.Types.ObjectId()
+        default: () => uuidv4()
     },
     image_url: { type: String },
     measure_value: { type: String },
