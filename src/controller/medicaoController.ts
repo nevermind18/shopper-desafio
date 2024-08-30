@@ -7,8 +7,7 @@ import fs from 'fs';
 import detectText from '../integration/detectText'
 
 class MedicaoController {
-    private static urlImagem(image: String) {
-        console.log(image)
+    static urlImagem(image: String): String {
 
         const storage = multer.diskStorage({
             destination: (req, file, cb) => {
@@ -18,7 +17,7 @@ class MedicaoController {
                 cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
             }
         });
-        
+
         const upload = multer({ storage });
         
         const base64Data = image.replace(/^data:image\/png;base64,/, ""); // Ajuste o prefixo conforme necessário
@@ -29,34 +28,33 @@ class MedicaoController {
 
         // Salvar o Buffer como um arquivo temporário
         fs.writeFile(tempFilePath, base64Data, 'base64', (err) => {
-            if (err) {
-                return "";
-            }
 
-            // Retornar a URL temporária
-            return  `http://localhost:3000/uploads/${tempFileName}`;
+            if (err) {
+                console.log(err)
+            }
             
         });
 
+        return tempFilePath;
+
     }
 
-    static async cadastarMedicao(req: Request, res: Response, next: NextFunction): Promise<void> {      
-        const { customer_code, measure_type, measure_datatime } = req.body;  
-        const pipeline = [
-            {
-                $match: {
-                    customer_code: customer_code,
-                    measure_type: measure_type.toLowerCase(),
-                    measure_datatime: {
-                        $gte: new Date(new Date(measure_datatime).getFullYear(), new Date(measure_datatime).getMonth(), 1),
-                        $lte: new Date(new Date(measure_datatime).getFullYear(), new Date(measure_datatime).getMonth() + 1, 0, 23, 59, 59, 999)
+    static async cadastarMedicao(req: Request, res: Response, next: NextFunction): Promise<void> {  
+        try {
+            const { customer_code, measure_type, measure_datatime } = req.body;  
+            const pipeline = [
+                {
+                    $match: {
+                        customer_code: customer_code,
+                        measure_type: measure_type.toLowerCase(),
+                        measure_datatime: {
+                            $gte: new Date(new Date(measure_datatime).getFullYear(), new Date(measure_datatime).getMonth(), 1),
+                            $lte: new Date(new Date(measure_datatime).getFullYear(), new Date(measure_datatime).getMonth() + 1, 0, 23, 59, 59, 999)
+                        }
                     }
                 }
-            }
-        ];
-        try {
+            ];
             const medicaoEncontrada = await medicao.aggregate(pipeline).exec();
-
             if(medicaoEncontrada.length === 0){
                 detectText(req.body.image).then(async (measure_value) => {
                     const medicaoCadastrar:IMedicao = await medicao.create(
@@ -68,7 +66,7 @@ class MedicaoController {
                         })
 
                     res.status(201).json({
-                        image_url: this.urlImagem(medicaoCadastrar.image_url),
+                        image_url: MedicaoController.urlImagem(req.body.image),
                         measure_value: medicaoCadastrar.measure_value,
                         measure_uuid: medicaoCadastrar.measure_uuid
                     })
@@ -85,36 +83,14 @@ class MedicaoController {
             next(error)
         }
     }
-    
-    static async listarMedicoes(req: Request, res: Response): Promise<void>{
-        res.status(200).json({
-            message: "Medições Listadas",
-            medicao: await medicao.find({})
-        })
-    }
-
-    static async listarMedicoesPorId(req: Request, res: Response): Promise<void>{
-
-        const medicaoEncontrada:IMedicao | null = await medicao.findOne({ measure_uuid: req.params.id})
-
-        if(medicaoEncontrada){
-            res.status(200).json({
-                message: "Medição encontrada",
-                medicao: {
-                    medicaoEncontrada
-                }
-            })
-        }
-    }
 
     static async listarMedicoesPorCliente(req: Request, res: Response, next: NextFunction): Promise<void>{
-
-        const query: any = { customer_code: req.params.customer_code };
-
-        if (req.query.measure_type) {
-            query.measure_type = req.query.measure_type;
-        }
         try{
+            const query: any = { customer_code: req.params.customer_code };
+
+            if (req.query.measure_type) {
+                query.measure_type = req.query.measure_type;
+            }
             const medicaoEncontrada = await medicao.find(query)
 
             let responseData:any = [];
@@ -129,18 +105,18 @@ class MedicaoController {
                 });
             });
 
-            if(medicaoEncontrada){
+            if(medicaoEncontrada.length !== 0){
                 res.status(200).json({
                     custumer_code: req.params.customer_code,
                     measures:responseData
                     
                 })
+            } else{
+                res.status(404).json({
+                    error_code: "MEASURE_NOT_FOUND",
+                    error_description: "Nenhuma leitura encontrada"
+                })
             }
-
-            res.status(404).json({
-                error_code: "MEASURE_NOT_FOUND",
-                error_description: "Nenhuma leitura encontrada"
-            })
         } catch (error) {
             next(error)
         }
@@ -157,7 +133,7 @@ class MedicaoController {
                     medicaoEncontrada.has_confirmed = true
                     await medicaoEncontrada.save();
                     res.status(200).json({
-                        succes: true
+                        success: true
                     })
                 }
 

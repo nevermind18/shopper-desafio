@@ -7,9 +7,7 @@ const routes: Router = express.Router();
 
 // Definindo as rotas para o controlador de autores
 routes.post('/upload', validateType.validateCadatro , MedicaoController.cadastarMedicao);
-routes.get('/list', MedicaoController.listarMedicoes);
-routes.get('/measureid/:id/list', MedicaoController.listarMedicoesPorId);
-routes.get('/:customer_code/list', MedicaoController.listarMedicoesPorCliente);
+routes.get('/:customer_code/list', validateType.validateList, MedicaoController.listarMedicoesPorCliente);
 routes.patch('/confirm', validateType.validateUpdate, MedicaoController.confirmMedicao);
 
 export default routes;
