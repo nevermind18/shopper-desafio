@@ -1,32 +1,28 @@
-import { ImageAnnotatorClient } from '@google-cloud/vision';
+import { GoogleGenerativeAI } from "@google/generative-ai"
+import salvaImageTemp from "./salvaImageTemp"
 
-// Cria um cliente
-const client = new ImageAnnotatorClient();
+async function detectText(fileName: string) {
 
-async function detectText(fileName: string): Promise<String | void> {
+    const key = process.env.GEMINI_API_KEY || ""
+    const genAI = new GoogleGenerativeAI(key)
+    const model = genAI.getGenerativeModel({
+        model: "gemini-1.5-pro",
+    })
+    
+    return salvaImageTemp(fileName).then(async (upload) => {
 
-    const request = {
-        image: {
-            content: fileName
-        }
-    };
-
-    try {
-        const [result] = await client.textDetection(request);
-        const detections = result.textAnnotations;
-        if (detections) {
-            for(let i:number = 1; i < detections.length; i++){
-                const description = detections[i].description ?? ''
-                if(/^\d+$/.test(description)){
-                    return description
-                }
-            }
-        }
-        console.log('Nenhum texto detectado.');
-        
-    } catch (error) {
-        console.error('Erro ao detectar texto:', error);
-    }
+        const result = await model.generateContent([
+            {
+              fileData: {
+                mimeType: upload.file.mimeType,
+                fileUri: upload.file.uri
+              }
+            },
+            { text: "which measurement is being marked on the screen?" },
+          ])
+        // Output the generated text to the console
+        return { measure_value: result.response.text().replace(/[^0-9\s]/g, '').trim(), image_url: upload.file.uri}
+    })
 }
 
-export default detectText;
+export default detectText

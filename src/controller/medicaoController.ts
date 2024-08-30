@@ -1,43 +1,43 @@
 import { Request, Response, NextFunction } from 'express'
 import { IMedicao, medicao } from '../model/medicao'
-import multer from 'multer';
-import crypto from 'crypto';
-import path from 'path';
-import fs from 'fs';
+// import multer from 'multer';
+// import crypto from 'crypto';
+// import path from 'path';
+// import fs from 'fs';
 import detectText from '../integration/detectText'
 
 class MedicaoController {
-    static urlImagem(image: String): String {
+    // static urlImagem(image: String): String {
 
-        const storage = multer.diskStorage({
-            destination: (req, file, cb) => {
-                cb(null, 'uploads/');
-            },
-            filename: (req, file, cb) => {
-                cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
-            }
-        });
+    //     const storage = multer.diskStorage({
+    //         destination: (req, file, cb) => {
+    //             cb(null, 'uploads/');
+    //         },
+    //         filename: (req, file, cb) => {
+    //             cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+    //         }
+    //     });
 
-        const upload = multer({ storage });
+    //     const upload = multer({ storage });
         
-        const base64Data = image.replace(/^data:image\/png;base64,/, ""); // Ajuste o prefixo conforme necessário
+    //     const base64Data = image.replace(/^data:image\/png;base64,/, ""); // Ajuste o prefixo conforme necessário
 
-        // Gerar um nome de arquivo temporário
-        const tempFileName = crypto.randomBytes(16).toString('hex') + '.png';
-        const tempFilePath = path.join(__dirname, 'uploads', tempFileName);
+    //     // Gerar um nome de arquivo temporário
+    //     const tempFileName = crypto.randomBytes(16).toString('hex') + '.png';
+    //     const tempFilePath = path.join(__dirname, 'uploads', tempFileName);
 
-        // Salvar o Buffer como um arquivo temporário
-        fs.writeFile(tempFilePath, base64Data, 'base64', (err) => {
+    //     // Salvar o Buffer como um arquivo temporário
+    //     fs.writeFile(tempFilePath, base64Data, 'base64', (err) => {
 
-            if (err) {
-                console.log(err)
-            }
+    //         if (err) {
+    //             console.log(err)
+    //         }
             
-        });
+    //     });
 
-        return tempFilePath;
+    //     return tempFilePath;
 
-    }
+    // }
 
     static async cadastarMedicao(req: Request, res: Response, next: NextFunction): Promise<void> {  
         try {
@@ -56,17 +56,16 @@ class MedicaoController {
             ];
             const medicaoEncontrada = await medicao.aggregate(pipeline).exec();
             if(medicaoEncontrada.length === 0){
-                detectText(req.body.image).then(async (measure_value) => {
+                detectText(req.body.image).then(async (measure) => {
                     const medicaoCadastrar:IMedicao = await medicao.create(
                         {...req.body,
                             measure_type: req.body.measure_type.toLowerCase(),
-                            image_url: req.body.image,
-                            measure_value,
+                            ...measure,
                             has_confirmed: false
                         })
 
                     res.status(201).json({
-                        image_url: MedicaoController.urlImagem(req.body.image),
+                        image_url: medicaoCadastrar.image_url,
                         measure_value: medicaoCadastrar.measure_value,
                         measure_uuid: medicaoCadastrar.measure_uuid
                     })

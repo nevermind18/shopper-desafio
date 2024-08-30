@@ -23,6 +23,11 @@
     google-gax "^4.0.3"
     is "^3.3.0"
 
+"@google/generative-ai@^0.17.1":
+  version "0.17.1"
+  resolved "https://registry.npmjs.org/@google/generative-ai/-/generative-ai-0.17.1.tgz"
+  integrity sha512-TgWz02c5l2XJlEDys81UVat5+Qg9xqmYah7tQt6xlsBwFvzIFPz64aZFGd1av2sxT22NsssqLATjNsusAIJICA==
+
 "@grpc/grpc-js@^1.10.9":
   version "1.11.1"
   resolved "https://registry.npmjs.org/@grpc/grpc-js/-/grpc-js-1.11.1.tgz"
