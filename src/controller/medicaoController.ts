@@ -1,45 +1,10 @@
 import { Request, Response, NextFunction } from 'express'
 import { IMedicao, medicao } from '../model/medicao'
-// import multer from 'multer';
-// import crypto from 'crypto';
-// import path from 'path';
-// import fs from 'fs';
 import detectText from '../integration/detectText'
 
 class MedicaoController {
-    // static urlImagem(image: String): String {
 
-    //     const storage = multer.diskStorage({
-    //         destination: (req, file, cb) => {
-    //             cb(null, 'uploads/');
-    //         },
-    //         filename: (req, file, cb) => {
-    //             cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
-    //         }
-    //     });
-
-    //     const upload = multer({ storage });
-        
-    //     const base64Data = image.replace(/^data:image\/png;base64,/, ""); // Ajuste o prefixo conforme necessário
-
-    //     // Gerar um nome de arquivo temporário
-    //     const tempFileName = crypto.randomBytes(16).toString('hex') + '.png';
-    //     const tempFilePath = path.join(__dirname, 'uploads', tempFileName);
-
-    //     // Salvar o Buffer como um arquivo temporário
-    //     fs.writeFile(tempFilePath, base64Data, 'base64', (err) => {
-
-    //         if (err) {
-    //             console.log(err)
-    //         }
-            
-    //     });
-
-    //     return tempFilePath;
-
-    // }
-
-    static async cadastarMedicao(req: Request, res: Response, next: NextFunction): Promise<void> {  
+    static async cadastarMedicao(req: Request, res: Response, next: NextFunction) {  
         try {
             const { customer_code, measure_type, measure_datatime } = req.body;  
             const pipeline = [
@@ -64,16 +29,16 @@ class MedicaoController {
                             has_confirmed: false
                         })
 
-                    res.status(201).json({
+                    return res.status(201).json({
                         image_url: medicaoCadastrar.image_url,
                         measure_value: medicaoCadastrar.measure_value,
                         measure_uuid: medicaoCadastrar.measure_uuid
                     })
                 }).catch((error) => {
-                    console.error('Erro ao executar a detecção:', error)
+                    next(error)
                 });
             } else {
-                res.status(409).json({
+                return res.status(409).json({
                     error_code: "DOUBLE_REPORT",
                     error_description: "Leitura do mês já realizada"
                 })
@@ -83,7 +48,7 @@ class MedicaoController {
         }
     }
 
-    static async listarMedicoesPorCliente(req: Request, res: Response, next: NextFunction): Promise<void>{
+    static async listarMedicoesPorCliente(req: Request, res: Response, next: NextFunction){
         try{
             const query: any = { customer_code: req.params.customer_code };
 
@@ -105,13 +70,13 @@ class MedicaoController {
             });
 
             if(medicaoEncontrada.length !== 0){
-                res.status(200).json({
+                return res.status(200).json({
                     custumer_code: req.params.customer_code,
                     measures:responseData
                     
                 })
             } else{
-                res.status(404).json({
+                return res.status(404).json({
                     error_code: "MEASURE_NOT_FOUND",
                     error_description: "Nenhuma leitura encontrada"
                 })
@@ -121,28 +86,28 @@ class MedicaoController {
         }
     }
 
-    static async confirmMedicao(req: Request, res: Response, next: NextFunction): Promise<void>{
+    static async confirmMedicao(req: Request, res: Response, next: NextFunction){
         try{
             var medicaoEncontrada = await medicao.findOne({ measure_uuid: req.body.measure_uuid})
 
             if (medicaoEncontrada !== null) {
-                if(!medicaoEncontrada.has_confirmed){
-
+                    if(!medicaoEncontrada.has_confirmed){
                     medicaoEncontrada.measure_value = req.body.confirm_value
                     medicaoEncontrada.has_confirmed = true
                     await medicaoEncontrada.save();
-                    res.status(200).json({
+
+                    return res.status(200).json({
                         success: true
                     })
                 }
 
-                res.status(409).json({
+                return res.status(409).json({
                     error_code: "CONFIRMATION_DUPLICATE",
                     error_description: "Leitura já confirmada"
                 })
             }
 
-            res.status(404).json({
+            return res.status(404).json({
                 error_code: "MEASURE_NOT_FOUND",
                 error_description: "Leitura não encontrada"
             })
