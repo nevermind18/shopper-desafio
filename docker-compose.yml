@@ -1,0 +1,22 @@
+services: 
+  mongodb:
+    image: mongo:latest
+    container_name: meu_mongo
+    networks:
+      - compose-bridge
+    environment:
+      MONGO_INITDB_DATABASE: shopper
+
+  node-shopper:
+    image: brfsan/bruno:1.1
+    container_name: shopper
+    networks:
+      - compose-bridge
+    ports:
+      - 3000:3000
+    depends_on:
+     - mongodb
+
+networks:
+  compose-bridge:
+    driver: bridge
