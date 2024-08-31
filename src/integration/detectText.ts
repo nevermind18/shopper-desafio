@@ -9,7 +9,7 @@ async function detectText(fileName: string): Promise<Object> {
       model: "gemini-1.5-pro",
   })
   
-  let upload = await salvaImageTemp(fileName);
+  let upload = await salvaImageTemp(fileName)
 
   try{
   const result = await model.generateContent([
