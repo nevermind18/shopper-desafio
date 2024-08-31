@@ -69,7 +69,7 @@ class validateType {
         if (measure_type !== undefined && measure_type.toLowerCase() !== MeasureType.GAS && measure_type.toLowerCase() !== MeasureType.WATER) {
             return res.status(400).json({
                 error_code: "INVALID_DATA",
-                error_description: "O tipo deve ser GAS ou WATER"
+                error_description: "Tipo de medição não permitida"
             });
         }
 

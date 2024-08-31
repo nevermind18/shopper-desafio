@@ -4,7 +4,7 @@ import detectText from '../integration/detectText'
 
 class MedicaoController {
 
-    static async cadastarMedicao(req: Request, res: Response, next: NextFunction) {  
+    static async cadastarMedicao(req: Request, res: Response, next: NextFunction): Promise<Response> {  
         try {
             const { customer_code, measure_type, measure_datatime } = req.body;  
             const pipeline = [
@@ -21,7 +21,7 @@ class MedicaoController {
             ];
             const medicaoEncontrada = await medicao.aggregate(pipeline).exec();
             if(medicaoEncontrada.length === 0){
-                detectText(req.body.image).then(async (measure) => {
+                var measure = await detectText(req.body.image)
                     const medicaoCadastrar:IMedicao = await medicao.create(
                         {...req.body,
                             measure_type: req.body.measure_type.toLowerCase(),
@@ -34,9 +34,6 @@ class MedicaoController {
                         measure_value: medicaoCadastrar.measure_value,
                         measure_uuid: medicaoCadastrar.measure_uuid
                     })
-                }).catch((error) => {
-                    next(error)
-                });
             } else {
                 return res.status(409).json({
                     error_code: "DOUBLE_REPORT",
@@ -45,10 +42,11 @@ class MedicaoController {
             }
         } catch (error) {
             next(error)
+            return res.status(500).json({message: "erro interno"})
         }
     }
 
-    static async listarMedicoesPorCliente(req: Request, res: Response, next: NextFunction){
+    static async listarMedicoesPorCliente(req: Request, res: Response, next: NextFunction): Promise<Response>{
         try{
             const query: any = { customer_code: req.params.customer_code };
 
@@ -83,10 +81,11 @@ class MedicaoController {
             }
         } catch (error) {
             next(error)
+            return res.status(500).json({message: "erro interno"})
         }
     }
 
-    static async confirmMedicao(req: Request, res: Response, next: NextFunction){
+    static async confirmMedicao(req: Request, res: Response, next: NextFunction): Promise<Response>{
         try{
             var medicaoEncontrada = await medicao.findOne({ measure_uuid: req.body.measure_uuid})
 
@@ -103,16 +102,17 @@ class MedicaoController {
 
                 return res.status(409).json({
                     error_code: "CONFIRMATION_DUPLICATE",
-                    error_description: "Leitura já confirmada"
+                    error_description: "Leitura do mês járealizada"
                 })
             }
 
             return res.status(404).json({
                 error_code: "MEASURE_NOT_FOUND",
-                error_description: "Leitura não encontrada"
+                error_description: "Leitura do mês járealizada"
             })
         } catch (error) {
             next(error)
+            return res.status(500).json({message: "erro interno"})
         }
     }
 }
