@@ -21,7 +21,7 @@ class MedicaoController {
             ];
             const medicaoEncontrada = await medicao.aggregate(pipeline).exec();
             if(medicaoEncontrada.length === 0){
-                var measure = await detectText(req.body.image)
+                let measure = await detectText(req.body.image)
                     const medicaoCadastrar:IMedicao = await medicao.create(
                         {...req.body,
                             measure_type: req.body.measure_type.toLowerCase(),
@@ -87,7 +87,7 @@ class MedicaoController {
 
     static async confirmMedicao(req: Request, res: Response, next: NextFunction): Promise<Response>{
         try{
-            var medicaoEncontrada = await medicao.findOne({ measure_uuid: req.body.measure_uuid})
+            let medicaoEncontrada = await medicao.findOne({ measure_uuid: req.body.measure_uuid})
 
             if (medicaoEncontrada !== null) {
                     if(!medicaoEncontrada.has_confirmed){

@@ -13,7 +13,7 @@ class validateType {
 
         if (!(typeof body.image === 'string' && validateType.isBase64(body.image))) {
             return res.status(400).json({
-                error_code: "INVALID_DATA",
+                errorInterface: "INVALID_DATA",
                 error_description: "O campo 'image' deve ser um valor válido codificado em Base64."
             })
         }
